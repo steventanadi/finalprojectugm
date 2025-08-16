@@ -142,9 +142,9 @@ if uploaded_file is not None:
             
             # --- Kesimpulan akhir ---
             if malicious > 0:
-                st.markdown("<h3 style='color:red;'>🚨 This APK File is MALICIOUS</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='text-align: center; 'color:red;'>🚨 This APK File is MALICIOUS</h3>", unsafe_allow_html=True)
             else:
-                st.markdown("<h3 style='color:green;'>✅ This APK File is BENIGN</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='text-align: center; 'color:green;'>✅ This APK File is BENIGN</h3>", unsafe_allow_html=True)
 
             # Show AV engine results
             av_results = data["last_analysis_results"]
@@ -161,5 +161,6 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"VirusTotal Error: {e}")
+
 
 
