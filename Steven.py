@@ -155,10 +155,11 @@ if uploaded_file is not None:
                     "Category": res["category"],
                     "Result": res["result"]
                 })
-            st.dataframe(pd.DataFrame(results_list).head(20))  # show top 20
+            st.dataframe(pd.DataFrame(results_list).head(40))  # show top 40
         else:
             st.warning("File not found in VirusTotal database. You may need to upload it manually.")
 
     except Exception as e:
         st.error(f"VirusTotal Error: {e}")
+
 
