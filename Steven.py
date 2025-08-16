@@ -6,7 +6,7 @@ import time
 import hashlib
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
-from catboost import CatBoostClassifier  # 🔥 tambahan CatBoost
+from catboost import CatBoostClassifier
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -29,8 +29,22 @@ rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X, y)
 
 # CatBoost (silent training agar tidak spam di terminal)
-cat_model = CatBoostClassifier(iterations=200, depth=6, learning_rate=0.1, random_state=42, verbose=0)
+cat_model = CatBoostClassifier(
+    iterations=200,
+    depth=6,
+    learning_rate=0.1,
+    random_state=42,
+    verbose=0
+)
 cat_model.fit(X, y)
+
+# Bagging (base = RandomForest)
+bagging_model = BaggingClassifier(
+    base_estimator=RandomForestClassifier(random_state=42),
+    n_estimators=50,
+    random_state=42
+)
+bagging_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -43,7 +57,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest & CatBoost).")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest, CatBoost & Bagging).")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -70,6 +84,7 @@ if uploaded_files:
                 resp_upload.raise_for_status()
                 apk_hash = resp_upload.json()["hash"]
 
+                # trigger scan
                 requests.post(f"{MOBSF_URL}/api/v1/scan", headers=MOBSF_HEADERS, data={"hash": apk_hash}, verify=False)
                 time.sleep(5)
 
@@ -82,6 +97,7 @@ if uploaded_files:
                 resp_json.raise_for_status()
                 report = resp_json.json()
 
+                # ambil permission yang digunakan
                 used_permissions = list(report.get("permissions", {}).keys())
                 binary_permissions = ["1" if perm in used_permissions else "0" for perm in all_permissions]
 
@@ -93,20 +109,24 @@ if uploaded_files:
                 cat_pred = cat_model.predict([binary_permissions])[0]
                 cat_proba = cat_model.predict_proba([binary_permissions])[0]
 
-                # Bagging (base = RandomForest default) 
-                bagging_model = BaggingClassifier(n_estimators=50, random_state=42) bagging_model.fit(X, y)
+                # Bagging prediction
+                bag_pred = bagging_model.predict([binary_permissions])[0]
+                bag_proba = bagging_model.predict_proba([binary_permissions])[0]
 
-                # tampilkan hasil keduanya dalam tabel
+                # tampilkan hasil semua model dalam tabel
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost","Bagging"],
-                    "Prediction": ["🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
-                                   "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN"],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100]
+                    "Model": ["RandomForest", "CatBoost", "Bagging"],
+                    "Prediction": [
+                        "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
+                        "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
+                        "🛑 MALWARE" if bag_pred == 1 else "✅ BENIGN"
+                    ],
+                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, bag_proba[0]*100],
+                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, bag_proba[1]*100]
                 })
                 st.table(pred_df)
 
-                # permissions
+                # permissions table
                 perm_df = pd.DataFrame({
                     "Permission": all_permissions,
                     "Used": ["Yes" if bit == "1" else "No" for bit in binary_permissions]
@@ -146,6 +166,7 @@ if uploaded_files:
                         st.markdown(f"<h3 style='color:{color};'>{icon} {text}</h3>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:green;'>✅ This APK File is BENIGN</h1>", unsafe_allow_html=True)
 
+                    # tampilkan hasil AV (max 40 dulu)
                     av_results = data["last_analysis_results"]
                     results_list = []
                     for av, res in av_results.items():
@@ -163,4 +184,3 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
-
