@@ -106,21 +106,18 @@ if uploaded_files:
                 rf_pred = rf_model.predict([binary_permissions])[0]; rf_proba = rf_model.predict_proba([binary_permissions])[0]
                 cat_pred = cat_model.predict([binary_permissions])[0]; cat_proba = cat_model.predict_proba([binary_permissions])[0]
                 lr_pred = lr_model.predict([binary_permissions])[0]; lr_proba = lr_model.predict_proba([binary_permissions])[0]
-                dt_pred = dt_model.predict([binary_permissions])[0]; dt_proba = dt_model.predict_proba([binary_permissions])[0]
-                nb_pred = nb_model.predict([binary_permissions])[0]; nb_proba = nb_model.predict_proba([binary_permissions])[0]
 
                 # Tampilkan hasil semua model
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost", "LogisticRegression", "DecisionTree", "NaiveBayes"],
+                    "Model": ["RandomForest", "CatBoost", "LogisticRegression"],
                     "Prediction": [
                         "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
                         "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
                         "🛑 MALWARE" if lr_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if dt_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if nb_pred == 1 else "✅ BENIGN",
+
                     ],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, lr_proba[0]*100, dt_proba[0]*100, nb_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, lr_proba[1]*100, dt_proba[1]*100, nb_proba[1]*100]
+                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, lr_proba[0]*100,
+                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, lr_proba[1]*100
                 })
                 st.table(pred_df)
 
@@ -179,3 +176,4 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
