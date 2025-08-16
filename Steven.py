@@ -6,8 +6,7 @@ import time
 import hashlib
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
-from catboost import CatBoostClassifier
-import lightgbm as lgb   # 🔥 tambahan LightGBM
+from catboost import CatBoostClassifier  # 🔥 tambahan CatBoost
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -29,13 +28,9 @@ y = dataset[LABEL_COLUMN]
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X, y)
 
-# CatBoost
+# CatBoost (silent training agar tidak spam di terminal)
 cat_model = CatBoostClassifier(iterations=200, depth=6, learning_rate=0.1, random_state=42, verbose=0)
 cat_model.fit(X, y)
-
-# LightGBM
-lgb_model = lgb.LGBMClassifier(n_estimators=200, learning_rate=0.1, random_state=42)
-lgb_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -48,7 +43,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest, CatBoost & LightGBM).")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest & CatBoost).")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -98,20 +93,13 @@ if uploaded_files:
                 cat_pred = cat_model.predict([binary_permissions])[0]
                 cat_proba = cat_model.predict_proba([binary_permissions])[0]
 
-                # LightGBM prediction
-                lgb_pred = lgb_model.predict([binary_permissions])[0]
-                lgb_proba = lgb_model.predict_proba([binary_permissions])[0]
-
-                # tampilkan hasil ketiga model dalam tabel
+                # tampilkan hasil keduanya dalam tabel
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost", "LightGBM"],
-                    "Prediction": [
-                        "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if lgb_pred == 1 else "✅ BENIGN"
-                    ],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, lgb_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, lgb_proba[1]*100]
+                    "Model": ["RandomForest", "CatBoost"],
+                    "Prediction": ["🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
+                                   "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN"],
+                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100],
+                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100]
                 })
                 st.table(pred_df)
 
