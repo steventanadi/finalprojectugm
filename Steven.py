@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from catboost import CatBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -39,6 +40,9 @@ cat_model.fit(X, y)
 dt_model = DecisionTreeClassifier(max_depth=10, random_state=42)
 dt_model.fit(X, y)
 
+# Naive Bayes
+nb_model = GaussianNB()
+nb_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -51,7 +55,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest, CatBoost, DecisionTree).")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest, CatBoost, LogisticRegression, DecisionTree, NaiveBayes).")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -97,17 +101,19 @@ if uploaded_files:
                 rf_pred = rf_model.predict([binary_permissions])[0]; rf_proba = rf_model.predict_proba([binary_permissions])[0]
                 cat_pred = cat_model.predict([binary_permissions])[0]; cat_proba = cat_model.predict_proba([binary_permissions])[0]
                 dt_pred = dt_model.predict([binary_permissions])[0]; dt_proba = dt_model.predict_proba([binary_permissions])[0]
+                nb_pred = nb_model.predict([binary_permissions])[0]; nb_proba = nb_model.predict_proba([binary_permissions])[0]
 
                 # Tampilkan hasil semua model
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost", "DecisionTree"],
+                    "Model": ["RandomForest", "CatBoost", "DecisionTree", "NaiveBayes"],
                     "Prediction": [
                         "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
                         "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
                         "🛑 MALWARE" if dt_pred == 1 else "✅ BENIGN",
+                        "🛑 MALWARE" if nb_pred == 1 else "✅ BENIGN",
                     ],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, dt_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, dt_proba[1]*100]
+                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, dt_proba[0]*100, nb_proba[0]*100],
+                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, dt_proba[1]*100, nb_proba[1]*100]
                 })
                 st.table(pred_df)
 
@@ -166,5 +172,3 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
-
-
