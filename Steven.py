@@ -5,7 +5,7 @@ import os
 import time
 import hashlib
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 from catboost import CatBoostClassifier  # 🔥 tambahan CatBoost
 
 # ==== CONFIG ====
@@ -93,9 +93,12 @@ if uploaded_files:
                 cat_pred = cat_model.predict([binary_permissions])[0]
                 cat_proba = cat_model.predict_proba([binary_permissions])[0]
 
+                # Bagging (base = RandomForest default) 
+                bagging_model = BaggingClassifier(n_estimators=50, random_state=42) bagging_model.fit(X, y)
+
                 # tampilkan hasil keduanya dalam tabel
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost"],
+                    "Model": ["RandomForest", "CatBoost","Bagging"],
                     "Prediction": ["🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
                                    "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN"],
                     "Benign %": [rf_proba[0]*100, cat_proba[0]*100],
@@ -160,3 +163,4 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
