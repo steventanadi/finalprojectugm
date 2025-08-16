@@ -6,25 +6,31 @@ import time
 import hashlib
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
+from catboost import CatBoostClassifier  # 🔥 tambahan CatBoost
 
 # ==== CONFIG ====
-MOBSF_URL = "https://a451a55e5904.ngrok-free.app"   # ganti dengan ngrok/local URL kamu
+MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
 MOBSF_API_KEY = "32a80594bfcab9678c087be240c5d103d5a0bfb81ee60e6e886b81a090119a3b"
 VT_API_KEY = "2a5e4a34ab856cae72d93d306df7b4f2b9521c66192b9f2ad5132b3b988c52d7"
 
 MOBSF_HEADERS = {"Authorization": MOBSF_API_KEY}
-
-DATASET_PATH = "data.csv"   # dataset harus ada di folder yang sama
+DATASET_PATH = "data.csv"
 LABEL_COLUMN = "Result"
 
-# ==== LOAD DATASET & TRAIN MODEL ====
+# ==== LOAD DATASET & TRAIN MODELS ====
 dataset = pd.read_csv(DATASET_PATH)
 all_permissions = dataset.columns[:-1].tolist()
 
 X = dataset[all_permissions]
 y = dataset[LABEL_COLUMN]
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X, y)
+
+# RandomForest
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X, y)
+
+# CatBoost (silent training agar tidak spam di terminal)
+cat_model = CatBoostClassifier(iterations=200, depth=6, learning_rate=0.1, random_state=42, verbose=0)
+cat_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -37,7 +43,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF** and **VirusTotal**")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest & CatBoost).")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -53,7 +59,7 @@ if uploaded_files:
             st.success(f"File uploaded: {uploaded_file.name}")
 
             # ========== MOBSF ==========
-            st.subheader("📊 MobSF Analysis")
+            st.subheader("📊 MobSF + ML Prediction")
             try:
                 resp_upload = requests.post(
                     f"{MOBSF_URL}/api/v1/upload",
@@ -64,11 +70,9 @@ if uploaded_files:
                 resp_upload.raise_for_status()
                 apk_hash = resp_upload.json()["hash"]
 
-                # scan
                 requests.post(f"{MOBSF_URL}/api/v1/scan", headers=MOBSF_HEADERS, data={"hash": apk_hash}, verify=False)
                 time.sleep(5)
 
-                # get report
                 resp_json = requests.post(
                     f"{MOBSF_URL}/api/v1/report_json",
                     headers=MOBSF_HEADERS,
@@ -81,12 +85,25 @@ if uploaded_files:
                 used_permissions = list(report.get("permissions", {}).keys())
                 binary_permissions = ["1" if perm in used_permissions else "0" for perm in all_permissions]
 
-                pred = model.predict([binary_permissions])[0]
-                proba = model.predict_proba([binary_permissions])[0]
+                # RandomForest prediction
+                rf_pred = rf_model.predict([binary_permissions])[0]
+                rf_proba = rf_model.predict_proba([binary_permissions])[0]
 
-                st.write("**Prediction:**", "🛑 MALWARE" if pred == 1 else "✅ BENIGN")
-                st.write(f"Confidence → Benign: {proba[0]*100:.2f}% | Malware: {proba[1]*100:.2f}%")
+                # CatBoost prediction
+                cat_pred = cat_model.predict([binary_permissions])[0]
+                cat_proba = cat_model.predict_proba([binary_permissions])[0]
 
+                # tampilkan hasil keduanya dalam tabel
+                pred_df = pd.DataFrame({
+                    "Model": ["RandomForest", "CatBoost"],
+                    "Prediction": ["🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
+                                   "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN"],
+                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100],
+                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100]
+                })
+                st.table(pred_df)
+
+                # permissions
                 perm_df = pd.DataFrame({
                     "Permission": all_permissions,
                     "Used": ["Yes" if bit == "1" else "No" for bit in binary_permissions]
@@ -112,7 +129,7 @@ if uploaded_files:
 
                     malicious = stats.get("malicious", 0)
                     total = sum(stats.values())
-                    
+
                     if malicious > 0:
                         color = "red"
                         icon = "🚨"
@@ -143,5 +160,3 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
-
-
