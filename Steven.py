@@ -5,8 +5,10 @@ import os
 import time
 import hashlib
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
-from catboost import CatBoostClassifier  # 🔥 tambahan CatBoost
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
+from catboost import CatBoostClassifier
+from sklearn.neural_network import MLPClassifier
+import lightgbm as lgb  # 🔥 LightGBM
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -28,9 +30,21 @@ y = dataset[LABEL_COLUMN]
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X, y)
 
-# CatBoost (silent training agar tidak spam di terminal)
+# CatBoost
 cat_model = CatBoostClassifier(iterations=200, depth=6, learning_rate=0.1, random_state=42, verbose=0)
 cat_model.fit(X, y)
+
+# MLP Classifier
+mlp_model = MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=300, random_state=42)
+mlp_model.fit(X, y)
+
+# LightGBM
+lgb_model = lgb.LGBMClassifier(n_estimators=200, learning_rate=0.05, random_state=42)
+lgb_model.fit(X, y)
+
+# Bagging (base = RandomForest default)
+bagging_model = BaggingClassifier(n_estimators=50, random_state=42)
+bagging_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -43,7 +57,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest & CatBoost).")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RF, CatBoost, MLP, LightGBM, Bagging).")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -85,30 +99,36 @@ if uploaded_files:
                 used_permissions = list(report.get("permissions", {}).keys())
                 binary_permissions = ["1" if perm in used_permissions else "0" for perm in all_permissions]
 
-                # RandomForest prediction
-                rf_pred = rf_model.predict([binary_permissions])[0]
-                rf_proba = rf_model.predict_proba([binary_permissions])[0]
+                # Prediction semua model
+                models = {
+                    "RandomForest": rf_model,
+                    "CatBoost": cat_model,
+                    "MLPClassifier": mlp_model,
+                    "LightGBM": lgb_model,
+                    "Bagging": bagging_model
+                }
 
-                # CatBoost prediction
-                cat_pred = cat_model.predict([binary_permissions])[0]
-                cat_proba = cat_model.predict_proba([binary_permissions])[0]
+                results = []
+                for name, model in models.items():
+                    pred = model.predict([binary_permissions])[0]
+                    proba = model.predict_proba([binary_permissions])[0]
+                    results.append({
+                        "Model": name,
+                        "Prediction": "🛑 MALWARE" if pred == 1 else "✅ BENIGN",
+                        "Benign %": proba[0]*100,
+                        "Malware %": proba[1]*100
+                    })
 
-                # tampilkan hasil keduanya dalam tabel
-                pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost"],
-                    "Prediction": ["🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
-                                   "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN"],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100]
-                })
+                pred_df = pd.DataFrame(results)
                 st.table(pred_df)
 
-                # permissions
+                # Permissions table dengan nomor mulai 1
                 perm_df = pd.DataFrame({
                     "Permission": all_permissions,
                     "Used": ["Yes" if bit == "1" else "No" for bit in binary_permissions]
                 })
-                st.dataframe(perm_df)
+                perm_df.insert(0, "No", range(1, len(perm_df)+1))
+                st.dataframe(perm_df, hide_index=True)
 
             except Exception as e:
                 st.error(f"MobSF Error: {e}")
@@ -131,16 +151,10 @@ if uploaded_files:
                     total = sum(stats.values())
 
                     if malicious > 0:
-                        color = "red"
-                        icon = "🚨"
-                        text = f"{malicious}/{total} vendors flagged this file as malicious"
-                        st.markdown(f"<h3 style='color:{color};'>{icon} {text}</h3>", unsafe_allow_html=True)
+                        st.markdown(f"<h3 style='color:red;'>🚨 {malicious}/{total} vendors flagged this file as malicious</h3>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:red;'>🚨 This APK File is MALICIOUS</h1>", unsafe_allow_html=True)
                     else:
-                        color = "green"
-                        icon = "✅"
-                        text = f"{malicious}/{total} vendors flagged this file as malicious"
-                        st.markdown(f"<h3 style='color:{color};'>{icon} {text}</h3>", unsafe_allow_html=True)
+                        st.markdown(f"<h3 style='color:green;'>✅ {malicious}/{total} vendors flagged this file as malicious</h3>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:green;'>✅ This APK File is BENIGN</h1>", unsafe_allow_html=True)
 
                     av_results = data["last_analysis_results"]
@@ -160,7 +174,3 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
-
-
-
-
