@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 from catboost import CatBoostClassifier
 from sklearn.neural_network import MLPClassifier
 import lightgbm as lgb  # 🔥 LightGBM
+import numpy as np
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -97,7 +98,7 @@ if uploaded_files:
                 report = resp_json.json()
 
                 used_permissions = list(report.get("permissions", {}).keys())
-                binary_permissions = [1 if perm in used_permissions else 0 for perm in all_permissions]
+                binary_permissions = np.array([1 if perm in used_permissions else 0 for perm in all_permissions], dtype=int)
                 
                 # Prediction semua model
                 models = {
@@ -126,7 +127,7 @@ if uploaded_files:
                 # Permissions table dengan nomor mulai 1
                 perm_df = pd.DataFrame({
                     "Permission": all_permissions,
-                    "Used": ["Yes" if bit == "1" else "No" for bit in binary_permissions]
+                    "Used": ["Yes" if bit == 1 else "No" for bit in binary_permissions]
                 })
                 perm_df.insert(0, "No", range(1, len(perm_df)+1))
                 st.dataframe(perm_df, hide_index=True)
@@ -175,4 +176,5 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
 
