@@ -108,12 +108,7 @@ if uploaded_files:
                     "Permission": all_permissions,
                     "Used": ["Yes" if bit == "1" else "No" for bit in binary_permissions]
                 })
-                
-                # Tambahkan kolom numbering mulai dari 1
-                perm_df.insert(0, "No", range(1, len(perm_df) + 1))
-                
-                # Tampilkan tanpa index
-                st.dataframe(perm_df, hide_index=True)
+                st.dataframe(perm_df)
 
             except Exception as e:
                 st.error(f"MobSF Error: {e}")
@@ -165,6 +160,7 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
 
 
 
