@@ -35,17 +35,10 @@ rf_model.fit(X, y)
 cat_model = CatBoostClassifier(iterations=200, depth=6, learning_rate=0.1, random_state=42, verbose=0)
 cat_model.fit(X, y)
 
-# Logistic Regression
-lr_model = LogisticRegression(max_iter=500, random_state=42)
-lr_model.fit(X, y)
-
 # Decision Tree
 dt_model = DecisionTreeClassifier(max_depth=10, random_state=42)
 dt_model.fit(X, y)
 
-# Naive Bayes
-nb_model = GaussianNB()
-nb_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -173,4 +166,5 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
 
