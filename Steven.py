@@ -5,14 +5,16 @@ import os
 import time
 import hashlib
 import matplotlib.pyplot as plt
-import numpy as np   # FIX: Tambah numpy
+import numpy as np  
 
 # ==== Machine Learning ====
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 from catboost import CatBoostClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
+import lightgbm as lgb
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -25,8 +27,11 @@ LABEL_COLUMN = "Result"
 
 # ==== LOAD DATASET & TRAIN MODELS ====
 dataset = pd.read_csv(DATASET_PATH)
-all_permissions = dataset.columns[:-1].tolist()
 
+# pastikan semua permission adalah numerik
+dataset[dataset.columns[:-1]] = dataset[dataset.columns[:-1]].astype(int)
+
+all_permissions = dataset.columns[:-1].tolist()
 X = dataset[all_permissions]
 y = dataset[LABEL_COLUMN]
 
@@ -50,6 +55,18 @@ dt_model.fit(X, y)
 nb_model = GaussianNB()
 nb_model.fit(X, y)
 
+# MLP Classifier (Neural Network)
+mlp_model = MLPClassifier(hidden_layer_sizes=(100,), max_iter=500, random_state=42)
+mlp_model.fit(X, y)
+
+# LightGBM
+lgb_model = lgb.LGBMClassifier(n_estimators=200, learning_rate=0.1, max_depth=-1, random_state=42)
+lgb_model.fit(X, y)
+
+# Bagging
+bag_model = BaggingClassifier(n_estimators=100, random_state=42)
+bag_model.fit(X, y)
+
 # ==== Fungsi utilitas ====
 def file_sha256(path):
     h = hashlib.sha256()
@@ -61,7 +78,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest, CatBoost, LogisticRegression, DecisionTree, NaiveBayes).")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models.")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -102,29 +119,27 @@ if uploaded_files:
 
                 used_permissions = list(report.get("permissions", {}).keys())
 
-                # FIX: gunakan int (0/1), bukan string
+                # gunakan int (0/1), bukan string
                 binary_permissions = [1 if perm in used_permissions else 0 for perm in all_permissions]
-                binary_permissions = np.array(binary_permissions).reshape(1, -1)  # FIX: pastikan 2D array
+                binary_permissions = np.array(binary_permissions).reshape(1, -1)
 
                 # Predictions dari semua model
-                rf_pred = rf_model.predict(binary_permissions)[0]; rf_proba = rf_model.predict_proba(binary_permissions)[0]
-                cat_pred = cat_model.predict(binary_permissions)[0]; cat_proba = cat_model.predict_proba(binary_permissions)[0]
-                lr_pred = lr_model.predict(binary_permissions)[0]; lr_proba = lr_model.predict_proba(binary_permissions)[0]
-                dt_pred = dt_model.predict(binary_permissions)[0]; dt_proba = dt_model.predict_proba(binary_permissions)[0]
-                nb_pred = nb_model.predict(binary_permissions)[0]; nb_proba = nb_model.predict_proba(binary_permissions)[0]
+                models = {
+                    "RandomForest": (rf_model, rf_model.predict(binary_permissions)[0], rf_model.predict_proba(binary_permissions)[0]),
+                    "CatBoost": (cat_model, cat_model.predict(binary_permissions)[0], cat_model.predict_proba(binary_permissions)[0]),
+                    "LogisticRegression": (lr_model, lr_model.predict(binary_permissions)[0], lr_model.predict_proba(binary_permissions)[0]),
+                    "DecisionTree": (dt_model, dt_model.predict(binary_permissions)[0], dt_model.predict_proba(binary_permissions)[0]),
+                    "NaiveBayes": (nb_model, nb_model.predict(binary_permissions)[0], nb_model.predict_proba(binary_permissions)[0]),
+                    "MLPClassifier": (mlp_model, mlp_model.predict(binary_permissions)[0], mlp_model.predict_proba(binary_permissions)[0]),
+                    "LightGBM": (lgb_model, lgb_model.predict(binary_permissions)[0], lgb_model.predict_proba(binary_permissions)[0]),
+                    "Bagging": (bag_model, bag_model.predict(binary_permissions)[0], bag_model.predict_proba(binary_permissions)[0])
+                }
 
-                # Tampilkan hasil semua model
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost", "LogisticRegression", "DecisionTree", "NaiveBayes"],
-                    "Prediction": [
-                        "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if lr_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if dt_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if nb_pred == 1 else "✅ BENIGN",
-                    ],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, lr_proba[0]*100, dt_proba[0]*100, nb_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, lr_proba[1]*100, dt_proba[1]*100, nb_proba[1]*100]
+                    "Model": list(models.keys()),
+                    "Prediction": ["🛑 MALWARE" if m[1] == 1 else "✅ BENIGN" for m in models.values()],
+                    "Benign %": [m[2][0]*100 for m in models.values()],
+                    "Malware %": [m[2][1]*100 for m in models.values()]
                 })
                 st.table(pred_df)
 
