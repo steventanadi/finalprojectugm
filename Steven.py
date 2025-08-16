@@ -97,8 +97,8 @@ if uploaded_files:
                 report = resp_json.json()
 
                 used_permissions = list(report.get("permissions", {}).keys())
-                binary_permissions = ["1" if perm in used_permissions else "0" for perm in all_permissions]
-
+                binary_permissions = [1 if perm in used_permissions else 0 for perm in all_permissions]
+                
                 # Prediction semua model
                 models = {
                     "RandomForest": rf_model,
@@ -107,7 +107,7 @@ if uploaded_files:
                     "LightGBM": lgb_model,
                     "Bagging": bagging_model
                 }
-
+                
                 results = []
                 for name, model in models.items():
                     pred = model.predict([binary_permissions])[0]
@@ -118,9 +118,10 @@ if uploaded_files:
                         "Benign %": proba[0]*100,
                         "Malware %": proba[1]*100
                     })
-
+                
                 pred_df = pd.DataFrame(results)
                 st.table(pred_df)
+
 
                 # Permissions table dengan nomor mulai 1
                 perm_df = pd.DataFrame({
@@ -174,3 +175,4 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
