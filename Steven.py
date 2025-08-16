@@ -112,28 +112,18 @@ if uploaded_files:
 
                     malicious = stats.get("malicious", 0)
                     total = sum(stats.values())
-
-                    fig, ax = plt.subplots(figsize=(1.2, 1.2))
-                    ax.pie(
-                        [malicious, total - malicious],
-                        colors=["red", "lightgrey"],
-                        startangle=90,
-                        counterclock=False,
-                        wedgeprops={"width": 0.3, "edgecolor": "white"}
-                    )
-                    st.pyplot(fig)
-
+                    
                     if malicious > 0:
                         color = "red"
                         icon = "🚨"
                         text = f"{malicious}/{total} vendors flagged this file as malicious"
-                        st.markdown(f"<h2 style='text-align: center; color:{color};'>{icon} {text}</h2>", unsafe_allow_html=True)
+                        st.markdown(f"<h2 style='color:{color};'>{icon} {text}</h2>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:red;'>🚨 This APK File is MALICIOUS</h1>", unsafe_allow_html=True)
                     else:
                         color = "green"
                         icon = "✅"
                         text = f"{malicious}/{total} vendors flagged this file as malicious"
-                        st.markdown(f"<h2 style='text-align: center; color:{color};'>{icon} {text}</h2>", unsafe_allow_html=True)
+                        st.markdown(f"<h2 style='color:{color};'>{icon} {text}</h2>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:green;'>✅ This APK File is BENIGN</h1>", unsafe_allow_html=True)
 
                     av_results = data["last_analysis_results"]
@@ -153,3 +143,4 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
