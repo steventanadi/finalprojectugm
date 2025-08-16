@@ -114,7 +114,6 @@ if uploaded_files:
                         "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
                         "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
                         "🛑 MALWARE" if lr_pred == 1 else "✅ BENIGN",
-
                     ],
                     "Benign %": [rf_proba[0]*100, cat_proba[0]*100, lr_proba[0]*100,
                     "Malware %": [rf_proba[1]*100, cat_proba[1]*100, lr_proba[1]*100
@@ -176,5 +175,6 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
 
 
