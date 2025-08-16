@@ -5,13 +5,8 @@ import os
 import time
 import hashlib
 import matplotlib.pyplot as plt
-
-# ==== Machine Learning ====
 from sklearn.ensemble import RandomForestClassifier
-from catboost import CatBoostClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import GaussianNB
+from catboost import CatBoostClassifier  # 🔥 tambahan CatBoost
 
 # ==== CONFIG ====
 MOBSF_URL = "https://a451a55e5904.ngrok-free.app"
@@ -33,21 +28,9 @@ y = dataset[LABEL_COLUMN]
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X, y)
 
-# CatBoost
+# CatBoost (silent training agar tidak spam di terminal)
 cat_model = CatBoostClassifier(iterations=200, depth=6, learning_rate=0.1, random_state=42, verbose=0)
 cat_model.fit(X, y)
-
-# Logistic Regression
-lr_model = LogisticRegression(max_iter=500, random_state=42)
-lr_model.fit(X, y)
-
-# Decision Tree
-dt_model = DecisionTreeClassifier(max_depth=10, random_state=42)
-dt_model.fit(X, y)
-
-# Naive Bayes
-nb_model = GaussianNB()
-nb_model.fit(X, y)
 
 # ==== Fungsi utilitas ====
 def file_sha256(path):
@@ -60,7 +43,7 @@ def file_sha256(path):
 # ==== STREAMLIT UI ====
 st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
 st.title("🔍 APK Malware Analysis")
-st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest, CatBoost, LogisticRegression).")
+st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models (RandomForest & CatBoost).")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
 
@@ -102,21 +85,21 @@ if uploaded_files:
                 used_permissions = list(report.get("permissions", {}).keys())
                 binary_permissions = ["1" if perm in used_permissions else "0" for perm in all_permissions]
 
-                # Predictions dari semua model
-                rf_pred = rf_model.predict([binary_permissions])[0]; rf_proba = rf_model.predict_proba([binary_permissions])[0]
-                cat_pred = cat_model.predict([binary_permissions])[0]; cat_proba = cat_model.predict_proba([binary_permissions])[0]
-                lr_pred = lr_model.predict([binary_permissions])[0]; lr_proba = lr_model.predict_proba([binary_permissions])[0]
+                # RandomForest prediction
+                rf_pred = rf_model.predict([binary_permissions])[0]
+                rf_proba = rf_model.predict_proba([binary_permissions])[0]
 
-                # Tampilkan hasil semua model
+                # CatBoost prediction
+                cat_pred = cat_model.predict([binary_permissions])[0]
+                cat_proba = cat_model.predict_proba([binary_permissions])[0]
+
+                # tampilkan hasil keduanya dalam tabel
                 pred_df = pd.DataFrame({
-                    "Model": ["RandomForest", "CatBoost", "LogisticRegression"],
-                    "Prediction": [
-                        "🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN",
-                        "🛑 MALWARE" if lr_pred == 1 else "✅ BENIGN",
-                    ],
-                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100, lr_proba[0]*100],
-                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100, lr_proba[1]*100]
+                    "Model": ["RandomForest", "CatBoost"],
+                    "Prediction": ["🛑 MALWARE" if rf_pred == 1 else "✅ BENIGN",
+                                   "🛑 MALWARE" if cat_pred == 1 else "✅ BENIGN"],
+                    "Benign %": [rf_proba[0]*100, cat_proba[0]*100],
+                    "Malware %": [rf_proba[1]*100, cat_proba[1]*100]
                 })
                 st.table(pred_df)
 
@@ -148,12 +131,14 @@ if uploaded_files:
                     total = sum(stats.values())
 
                     if malicious > 0:
-                        color = "red"; icon = "🚨"
+                        color = "red"
+                        icon = "🚨"
                         text = f"{malicious}/{total} vendors flagged this file as malicious"
                         st.markdown(f"<h3 style='color:{color};'>{icon} {text}</h3>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:red;'>🚨 This APK File is MALICIOUS</h1>", unsafe_allow_html=True)
                     else:
-                        color = "green"; icon = "✅"
+                        color = "green"
+                        icon = "✅"
                         text = f"{malicious}/{total} vendors flagged this file as malicious"
                         st.markdown(f"<h3 style='color:{color};'>{icon} {text}</h3>", unsafe_allow_html=True)
                         st.markdown("<h1 style='text-align: center; color:green;'>✅ This APK File is BENIGN</h1>", unsafe_allow_html=True)
@@ -175,7 +160,3 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
-
-
-
-
