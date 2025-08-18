@@ -17,7 +17,7 @@ from sklearn.neural_network import MLPClassifier
 import lightgbm as lgb
 
 # ==== CONFIG ====
-MOBSF_URL = "https://1c7fe94d234e.ngrok-free.app"
+MOBSF_URL = "https://314c741856d5.ngrok-free.app"
 MOBSF_API_KEY = "32a80594bfcab9678c087be240c5d103d5a0bfb81ee60e6e886b81a090119a3b"
 VT_API_KEY = "2a5e4a34ab856cae72d93d306df7b4f2b9521c66192b9f2ad5132b3b988c52d7"
 
@@ -198,5 +198,6 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")  # pemisah antar file
+
 
 
