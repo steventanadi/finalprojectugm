@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import joblib
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
@@ -9,8 +10,11 @@ from sklearn.neural_network import MLPClassifier
 import lightgbm as lgb
 
 # ==== CONFIG ====
-DATASET_PATH = "data.csv"
+DATASET_PATH = "data.csv"   # pastikan file dataset kamu formatnya CSV
 LABEL_COLUMN = "Result"
+
+# Buat folder "models" kalau belum ada
+os.makedirs("models", exist_ok=True)
 
 # ==== LOAD DATASET ====
 dataset = pd.read_csv(DATASET_PATH)
