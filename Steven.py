@@ -111,8 +111,9 @@ if uploaded_files:
                 # Show permissions
                 perm_df = pd.DataFrame({
                     "Permission": all_permissions,
-                    "Used": ["Yes" if bit == 1 else "No" for bit in binary_permissions.flatten()]
+                    "Used": ["Yes" if bit == 1 else "No" for bit in binary_permissions.iloc[0].tolist()]
                 })
+
                 st.dataframe(perm_df)
 
             except Exception as e:
@@ -159,6 +160,7 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
 
 
 
