@@ -89,7 +89,10 @@ if uploaded_files:
 
                 used_permissions = list(report.get("permissions", {}).keys())
                 binary_permissions = [1 if perm in used_permissions else 0 for perm in all_permissions]
-                binary_permissions = np.array(binary_permissions).reshape(1, -1)
+                binary_permissions = pd.DataFrame(
+                    [binary_permissions],
+                    columns=all_permissions
+                )
 
                 # Predictions
                 pred_results = []
@@ -156,6 +159,7 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
 
 
 
