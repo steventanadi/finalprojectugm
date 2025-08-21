@@ -47,8 +47,8 @@ def file_sha256(path):
     return h.hexdigest()
 
 # ==== STREAMLIT UI ====
-st.set_page_config(page_title="APK Analysis (MobSF + VirusTotal)", layout="wide")
-st.title("🔍 APK Malware Analysis")
+st.set_page_config(page_title="APK Android Checker (MobSF + VirusTotal)", layout="wide")
+st.title("🔍 APK Android Checker")
 st.markdown("Upload one or multiple APKs to analyze them with **MobSF**, **VirusTotal**, and compare ML models.")
 
 uploaded_files = st.file_uploader("Upload APK file(s)", type=["apk"], accept_multiple_files=True)
@@ -160,6 +160,7 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
 
 
 
