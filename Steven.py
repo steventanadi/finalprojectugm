@@ -29,7 +29,7 @@ def load_models():
         "CatBoost": joblib.load("models/cat_model.pkl"),
         "LogisticRegression": joblib.load("models/lr_model.pkl"),
         "DecisionTree": joblib.load("models/dt_model.pkl"),
-        "NaiveBayes": joblib.load("models/nb_model.pkl"),
+        "ExtraTrees": joblib.load("models/et_model.pkl"),
         "MLPClassifier": joblib.load("models/mlp_model.pkl"),
         "LightGBM": joblib.load("models/lgb_model.pkl"),
         "Bagging": joblib.load("models/bag_model.pkl"),
@@ -158,4 +158,5 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
 
