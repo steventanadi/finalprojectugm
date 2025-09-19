@@ -6,3 +6,5 @@ requests
 scikit-learn
 catboost
 lightgbm
+xgboost
+joblib
