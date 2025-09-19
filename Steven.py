@@ -33,6 +33,8 @@ def load_models():
         "MLPClassifier": joblib.load("models/mlp_model.pkl"),
         "LightGBM": joblib.load("models/lgb_model.pkl"),
         "Bagging": joblib.load("models/bag_model.pkl"),
+        "KNeighbors": joblib.load("models/knn_model.pkl"),
+        "XGBoost": joblib.load("models/xg_model.pkl") 
     }
     return models
 
@@ -156,3 +158,4 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
