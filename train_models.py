@@ -46,12 +46,13 @@ joblib.dump(rf_model,  "models/rf_model.pkl")
 joblib.dump(cat_model, "models/cat_model.pkl")
 joblib.dump(lr_model,  "models/lr_model.pkl")
 joblib.dump(dt_model,  "models/dt_model.pkl")
-joblib.dump(et_model,  "models/et_model.pkl")  # Menambahkan model ExtraTrees
+joblib.dump(et_model,  "models/et_model.pkl") 
 joblib.dump(mlp_model, "models/mlp_model.pkl")
 joblib.dump(lgb_model, "models/lgb_model.pkl")
 joblib.dump(bag_model, "models/bag_model.pkl")
-joblib.dump(knn_model, "models/knn_model.pkl")  # Menambahkan model KNN
-joblib.dump(xg_model, "models/xg_model.pkl")  # Menambahkan model XGBoost
+joblib.dump(knn_model, "models/knn_model.pkl") 
+joblib.dump(xg_model, "models/xg_model.pkl")
 
 print("✅ Semua model berhasil dilatih & disimpan ke folder models/")
+
 
