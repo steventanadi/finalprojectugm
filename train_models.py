@@ -5,7 +5,6 @@ from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, ExtraTre
 from catboost import CatBoostClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -55,3 +54,4 @@ joblib.dump(knn_model, "models/knn_model.pkl")  # Menambahkan model KNN
 joblib.dump(xg_model, "models/xg_model.pkl")  # Menambahkan model XGBoost
 
 print("✅ Semua model berhasil dilatih & disimpan ke folder models/")
+
