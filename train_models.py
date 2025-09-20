@@ -26,8 +26,11 @@ all_permissions = dataset.columns[:-1].tolist()
 X = dataset[all_permissions]
 y = dataset[LABEL_COLUMN]
 
-# Split data into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+# Split data into train+validation (80%) and test set (20%)
+X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+
+# Split train+validation into train (70%) and validation (10%)
+X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=0.125, random_state=42)  # 0.125 of 0.8 is 0.1
 
 # ==== TRAIN MODELS ==== 
 rf_model  = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_train, y_train)
@@ -54,6 +57,3 @@ joblib.dump(knn_model, "models/knn_model.pkl")
 joblib.dump(xg_model, "models/xg_model.pkl")
 
 print("✅ Semua model berhasil dilatih & disimpan ke folder models/")
-
-
-
