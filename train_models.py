@@ -27,7 +27,7 @@ X = dataset[all_permissions]
 y = dataset[LABEL_COLUMN]
 
 # Split data into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # ==== TRAIN MODELS ==== 
 rf_model  = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_train, y_train)
@@ -54,5 +54,6 @@ joblib.dump(knn_model, "models/knn_model.pkl")
 joblib.dump(xg_model, "models/xg_model.pkl")
 
 print("✅ Semua model berhasil dilatih & disimpan ke folder models/")
+
 
 
