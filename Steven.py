@@ -81,7 +81,7 @@ if uploaded_files:
                 time.sleep(5)
 
                 resp_json = requests.post(
-                    f"{MOBSF_URL}/api/v1/report_json",
+                    f"{MOBSF_URL}api/v1/report_json",
                     headers=MOBSF_HEADERS,
                     data={"hash": apk_hash},
                     verify=False
@@ -158,6 +158,7 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
 
 
 
