@@ -26,15 +26,8 @@ all_permissions = dataset.columns[:-1].tolist()
 def load_models():
     models = {
         "RandomForest": joblib.load("models/rf_model.pkl"),
-        "CatBoost": joblib.load("models/cat_model.pkl"),
-        "LogisticRegression": joblib.load("models/lr_model.pkl"),
-        "DecisionTree": joblib.load("models/dt_model.pkl"),
-        "ExtraTrees": joblib.load("models/et_model.pkl"),
-        "MLPClassifier": joblib.load("models/mlp_model.pkl"),
         "LightGBM": joblib.load("models/lgb_model.pkl"),
-        "Bagging": joblib.load("models/bag_model.pkl"),
-        "KNeighbors": joblib.load("models/knn_model.pkl"),
-        "XGBoost": joblib.load("models/xg_model.pkl") 
+        "ExtraTrees": joblib.load("models/et_model.pkl"),
     }
     return models
 
@@ -158,6 +151,7 @@ if uploaded_files:
                 st.error(f"VirusTotal Error: {e}")
 
             st.markdown("---")
+
 
 
 
