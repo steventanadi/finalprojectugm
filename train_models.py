@@ -1,15 +1,9 @@
 import os
 import pandas as pd
 import joblib
-from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, ExtraTreesClassifier
-from catboost import CatBoostClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
 import lightgbm as lgb
-import xgboost as xgb
 
 # ==== CONFIG ==== 
 DATASET_PATH = "data.csv"   # pastikan file dataset kamu formatnya CSV
@@ -33,27 +27,19 @@ X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=0.1,
 X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=0.125, random_state=42)  # 0.125 of 0.8 is 0.1
 
 # ==== TRAIN MODELS ==== 
-rf_model  = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_train, y_train)
-bag_model = BaggingClassifier(n_estimators=200, random_state=42).fit(X_train, y_train)
-et_model  = ExtraTreesClassifier(n_estimators=300, random_state=42).fit(X_train, y_train)
-cat_model = CatBoostClassifier(iterations=2000, depth=6, learning_rate=0.1, random_state=42, verbose=0).fit(X_train, y_train)
-lgb_model = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.1, random_state=42).fit(X_train, y_train)
-dt_model  = DecisionTreeClassifier(max_depth=30, random_state=42).fit(X_train, y_train)
-mlp_model = MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000, random_state=42).fit(X_train, y_train)
-lr_model  = LogisticRegression(max_iter=500, random_state=42).fit(X_train, y_train)
-knn_model = KNeighborsClassifier(n_neighbors=10).fit(X_train, y_train)
-xg_model  = xgb.XGBClassifier(n_estimators=1000, learning_rate=0.1, random_state=42).fit(X_train, y_train)
+rf_model = RandomForestClassifier(
+    n_estimators=100, criterion='entropy', max_depth=None,
+    min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0,
+    max_features='sqrt', max_leaf_nodes=None, min_impurity_decrease=0.0,
+    bootstrap=True, n_jobs=-1, random_state=42, class_weight='balanced',
+    ccp_alpha=0.0, max_samples=None
+)
+lgb_model = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.1, random_state=42)
+et_model = ExtraTreesClassifier(n_estimators=200, max_depth=25, max_features='log2', bootstrap=False, n_jobs=-1, random_state=42)
 
 # ==== SAVE MODELS ==== 
 joblib.dump(rf_model,  "models/rf_model.pkl")
-joblib.dump(cat_model, "models/cat_model.pkl")
-joblib.dump(lr_model,  "models/lr_model.pkl")
-joblib.dump(dt_model,  "models/dt_model.pkl")
-joblib.dump(et_model,  "models/et_model.pkl") 
-joblib.dump(mlp_model, "models/mlp_model.pkl")
 joblib.dump(lgb_model, "models/lgb_model.pkl")
-joblib.dump(bag_model, "models/bag_model.pkl")
-joblib.dump(knn_model, "models/knn_model.pkl") 
-joblib.dump(xg_model, "models/xg_model.pkl")
+joblib.dump(et_model,  "models/et_model.pkl")
 
 print("✅ Semua model berhasil dilatih & disimpan ke folder models/")
